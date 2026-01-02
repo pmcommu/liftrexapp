@@ -1,11 +1,11 @@
-import React,{useMemo,useCallback,useRef,useEffect} from "react";
+import React,{useMemo,useCallback,useRef,useEffect,useState} from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   FlatList,
-  StyleSheet,Animated
+  StyleSheet,Animated,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import Colors from "../../constants/Colors";
@@ -16,11 +16,11 @@ import D, {
   Spacing,
   Radius,
 } from "../../constants/Dimmence";
-import { useSelector,useDispatch } from "react-redux";
-import { setSelectedInquiry ,openCreateProposalModal} from "../../redux/Slices/selectedInquirySlice";
-import AnimatedSpinner from "../all/AnimatedSpinner";
 import * as IMAGE from "../../assets/svg/index"
-
+import AnimatedSpinner from "../all/AnimatedSpinner";
+import CommonRevertModal from "../portfolio/custom/CommonRevertModal";
+import { useDispatch } from "react-redux";
+import { setSelectedInquiry } from "../../redux/Slices/selectedInquirySlice";
 const SkeletonCard = () => {
   const shimmerAnim = useRef(new Animated.Value(-1)).current;
 
@@ -66,37 +66,39 @@ const SkeletonCard = () => {
   );
 };
 
-export default function Proposals({
+export default function RejectedJobs({
   navigation,
   data = [],
-  loading,        
+  loading,        // 👈 initial loading
   loadingMore,    // 👈 pagination loading
   onLoadMore,
   search,
   hasMore,
+  onRevertPress 
 }) {
 
-
-  console.log("proposal ",data)
-
-
-  const SkeletonList = () => (
-    <>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <SkeletonCard key={i} />
-      ))}
-    </>
-  );
   
-  
-    if (loading && data.length === 0) {
-    return (
-      <View style={styles.container}>
-        <SkeletonList />
-      </View>
+
+const dispatch = useDispatch();
+
+    const SkeletonList = () => (
+      <>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </>
     );
-  }
-if (!loading && data.length === 0 && search) {
+    
+    
+      if (loading && data.length === 0) {
+      return (
+        <View style={styles.container}>
+          <SkeletonList />
+        </View>
+      );
+    }
+
+    if (!loading && data.length === 0 && search) {
   return (
     <View style={styles.emptyState}>
       <Feather name="search" size={42} color="#ccc" />
@@ -110,18 +112,23 @@ if (!loading && data.length === 0 && search) {
 
   return (
     <View style={styles.container}>
-     
+    
       
 <FlatList
   data={data}
   keyExtractor={(item) => item._id}
   renderItem={({ item }) => (
-    <InquiryCard item={item} navigation={navigation} />
+    <InquiryCard
+      item={item}
+      navigation={navigation}
+     onRevertPress={onRevertPress}
+     dispatch={dispatch}
+    />
   )}
   contentContainerStyle={{ paddingBottom: 140 }}
   onEndReached={onLoadMore}
   onEndReachedThreshold={0.6}
-  ListFooterComponent={
+ ListFooterComponent={
   loading && data.length > 0 ? (
     <View style={styles.footerLoader}>
       <AnimatedSpinner size={26} />
@@ -138,37 +145,11 @@ if (!loading && data.length === 0 && search) {
 
 
 
-
-      {/* Bottom actions (same UI) */}
-      {/* <View style={styles.bottomActions}>
-        <View style={styles.actionWrapper}>
-          <TouchableOpacity style={styles.actionBtn}>
-            <Feather name="sliders" size={18} color="#333" />
-            <Text style={styles.actionText}>Sort by</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.actionBtn}>
-            <Feather name="filter" size={18} color="#333" />
-            <Text style={styles.actionText}>Filter by</Text>
-          </TouchableOpacity>
-        </View>
-      </View> */}
     </View>
   );
 }
 
-
-
-function InquiryCard({ item, navigation }) {
-
-   const dispatch = useDispatch();
-     
-       const handleViewDetails = () => {
-         dispatch(setSelectedInquiry(item)); // 🔥 FULL OBJECT STORE
-         navigation.navigate("ProjectDashboard");
-       };
+function InquiryCard({ item, navigation,onRevertPress ,dispatch }) {
 
 
   return (
@@ -183,62 +164,101 @@ function InquiryCard({ item, navigation }) {
 
    <View style={styles.dashedDivider} />
       {/* Elevators */}
-     {/* INFO CARD */}
-        <View style={styles.peopleRow}>
-                 {/* Elevators */}
-                 <View style={styles.personBox}>
-                   <IMAGE.FLEX width={40} height={30} />
-                   <View style={styles.personDetails}>
-                     <Text style={styles.personLabel}>No. of Elevators</Text>
-                     <Text style={styles.mechanic}>
-                       {item.noOfElevatorsNum}
-                     </Text>
-                   </View>
-                 </View>
-         
-                 {/* Client */}
-                 <View style={styles.personBox}>
-                   <IMAGE.USER_CHECK width={32} height={32} />
-                   <View style={styles.personDetails}>
-                     <Text style={styles.personLabel}>Client</Text>
-                     <Text style={styles.site}>
-                       {item.client?.clientName || "-"}
-                     </Text>
-                   </View>
-                 </View>
+       <View style={styles.peopleRow}>
+             {/* Elevators */}
+             <View style={styles.personBox}>
+               <IMAGE.FLEX width={40} height={30} />
+               <View style={styles.personDetails}>
+                 <Text style={styles.personLabel}>No. of Elevators</Text>
+                 <Text style={styles.mechanic}>
+                   {item.noOfElevatorsNum}
+                 </Text>
                </View>
+             </View>
+     
+             {/* Client */}
+             <View style={styles.personBox}>
+               <IMAGE.USER_CHECK width={32} height={32} />
+               <View style={styles.personDetails}>
+                 <Text style={styles.personLabel}>Client</Text>
+                 <Text style={styles.site}>
+                   {item.client?.clientName || "-"}
+                 </Text>
+               </View>
+             </View>
+           </View>
 
       {/* Buttons */}
-      <View style={styles.btnRow}>
+<View style={styles.btnRow}>
+  {item.status === "REJECTED" ? (
+    <>
+      {/* REJECT STATUS BUTTON (non-clickable) */}
+      <TouchableOpacity
+        disabled
+        style={[styles.greyBtn, styles.disabledBtn]}
+      >
+        <Text style={[styles.greyBtnText, styles.disabledText]}>
+          Rejected
+        </Text>
+      </TouchableOpacity>
+
+      {/* REVERT PRICE BUTTON */}
+      <TouchableOpacity
+        style={styles.orangeBtn}
+    onPress={() => {
+  dispatch(setSelectedInquiry(item));
+  onRevertPress(item);
+}}
+
+      
+      >
+        <Text style={styles.orangeBtnText}>
+          Revert Price
+        </Text>
+      </TouchableOpacity>
+    </>
+  ) : (
+    <>
+      {/* NORMAL FLOW */}
+      <TouchableOpacity
+        style={styles.greyBtn}
+        onPress={() =>
+          navigation.navigate("ProjectDashboard", {
+            projectId: item.projectId,
+            inquiryId: item._id,
+          })
+        }
+      >
+        <Text style={styles.greyBtnText}>View Details</Text>
+      </TouchableOpacity>
+
+      {!item.paymentTermsCreated && (
         <TouchableOpacity
-          style={styles.greyBtn}
-          onPress={handleViewDetails
+          style={styles.orangeBtn}
+          onPress={() =>
+            navigation.navigate("CreateProposal", {
+              inquiryId: item._id,
+            })
           }
         >
-          <Text style={styles.greyBtnText}>Signed Proposal</Text>
+          <Text style={styles.orangeBtnText}>
+            Create Proposal
+          </Text>
         </TouchableOpacity>
+      )}
+    </>
+  )}
+</View>
 
-        {/* {!item.paymentTermsCreated && (
-          <TouchableOpacity
-            style={styles.orangeBtn}
-            onPress={() =>
-              navigation.navigate("CreateProposal", {
-                inquiryId: item._id,
-              })
-            }
-          >
-            <Text style={styles.orangeBtnText}>
-              Create Proposal
-            </Text>
-          </TouchableOpacity>
-        )} */}
-      </View>
+
 
       {/* Created date */}
-      <Text style={styles.dateText}>
-        Created on:{" "}
-        {new Date(item.createdAt).toDateString()}
-      </Text>
+     <View style={styles.createtime}>
+            <Text style={styles.dateText}>
+              Created on:{" "}
+              {new Date(item.createdAt).toDateString()}
+            </Text>
+          </View>
     </View>
   );
 }
@@ -251,6 +271,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
    
   },
+
+  /* Search Row */
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: verticalScale(10),
+     marginHorizontal: moderateScale(10),
+  },
+
 
   /* CARD */
   card: {
@@ -282,34 +311,6 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(5),
   },
 
-  
-  
-  peopleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-   
-    marginTop: 12,
-  },
-  
-  personBox: {
-       justifyContent: "center",    
-    flexDirection: "row",      // 👈 Icon + right side text
-    alignItems: "center",
-    width: "48%",
-  },
-  
-  personDetails: {
-    marginLeft: 10,            // 👈 space between icon & text
-    justifyContent: "center",
-  },
-  
-  personLabel: {
-    fontSize: 12,
-    color: "#444",
-    marginBottom: 3,
-  },
-  
-
   row: {
     flexDirection: "row",
     marginTop: verticalScale(10),
@@ -330,16 +331,15 @@ const styles = StyleSheet.create({
   greyBtn: {
     flex: 1,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: Colors.border,
     borderRadius: Radius.pill,
     paddingVertical: verticalScale(8),
     alignItems: "center",
   },
 
   greyBtnText: {
-    color: Colors.primary,
-    fontSize: fontScale(15),
-    fontWeight:"700"
+    color: Colors.black,
+    fontSize: fontScale(13),
   },
 
   orangeBtn: {
@@ -351,33 +351,63 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  orangeBtnText: {
+    color: Colors.white,
+    fontSize: fontScale(13),
+    fontWeight: "700",
+  },
+createtime:{
+   alignItems:'center',
 
+},
   dateText: {
  
     marginTop: verticalScale(10),
     color: "#999",
     fontSize: fontScale(15),
   },
- bottomActions: {
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  alignItems: "center",
-  paddingVertical: 12,
-  backgroundColor: "#fff",
-  borderTopWidth: 1,
-  borderColor: "#eee",
-  paddingBottom: 25, // to look clean
+
+
+
+
+
+disabledBtn: {
+  backgroundColor: "#fac7c770",
+  borderColor: "#f97777",
 },
 
-actionWrapper: {
+disabledText: {
+  color: "#f97777",
+  fontWeight: "600",
+},
+
+
+peopleRow: {
   flexDirection: "row",
-  backgroundColor: "#fff",
-  paddingHorizontal: 20,
-  paddingVertical: 10,
-
+  justifyContent: "space-between",
+ 
+  marginTop: 12,
 },
+
+personBox: {
+     justifyContent: "center",    
+  flexDirection: "row",      // 👈 Icon + right side text
+  alignItems: "center",
+  width: "48%",
+},
+
+personDetails: {
+  marginLeft: 10,            // 👈 space between icon & text
+  justifyContent: "center",
+},
+
+personLabel: {
+  fontSize: 12,
+  color: "#444",
+  marginBottom: 3,
+},
+
+
 
 ////////////////////
 skeletonLineSmall: {
@@ -416,7 +446,8 @@ skeletonBtn: {
   borderRadius: 20,
 },
 
-/* 🔥 SHIMMER OVERLAY */
+/*  SHIMMER OVERLAY */
+
 shimmerOverlay: {
   position: "absolute",
   top: 0,
@@ -426,7 +457,6 @@ shimmerOverlay: {
   backgroundColor: "rgba(255, 255, 255, 0.278)",
 },
 
-//////////
 footerLoader: {
   paddingVertical: 24,
   alignItems: "center",
@@ -446,7 +476,7 @@ noMoreText: {
   fontSize: fontScale(12),
 },
 
-///////////////////////////
+
 emptyState: {
   flex: 1,
   alignItems: "center",

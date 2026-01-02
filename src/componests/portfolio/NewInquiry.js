@@ -1,11 +1,11 @@
-import React from "react";
+import React,{useMemo,useCallback,useRef,useEffect} from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   FlatList,
-  StyleSheet,
+  StyleSheet,Animated
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import Colors from "../../constants/Colors";
@@ -18,118 +18,256 @@ import D, {
   Spacing,
   Radius,
 } from "../../constants/Dimmence";
+import { useDispatch } from "react-redux";
+import { setSelectedInquiry ,openCreateProposalModal} from "../../redux/Slices/selectedInquirySlice";
+import AnimatedSpinner from "../all/AnimatedSpinner";
 
 
+const SkeletonCard = () => {
+  const shimmerAnim = useRef(new Animated.Value(-1)).current;
 
-export default function NewInquiry({navigation}) {
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(shimmerAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const translateX = shimmerAnim.interpolate({
+    inputRange: [-1, 1],
+    outputRange: [-300, 300],
+  });
+
+
+  return (
+    <View style={[styles.card, { overflow: "hidden", backgroundColor: "#eee" }]}>
+      
+      {/* STATIC SKELETON BLOCKS */}
+      <View style={styles.skeletonLineSmall} />
+      <View style={styles.skeletonLineLarge} />
+      <View style={styles.skeletonLineMedium} />
+      <View style={styles.skeletonLineMedium} />
+
+      <View style={styles.skeletonBtnRow}>
+        <View style={styles.skeletonBtn} />
+        <View style={[styles.skeletonBtn, { marginLeft: 10 }]} />
+      </View>
+
+      {/* 🔥 SLIDING HIGHLIGHT */}
+      <Animated.View
+        style={[
+          styles.shimmerOverlay,
+          {
+            transform: [{ translateX }],
+          },
+        ]}
+      />
+    </View>
+  );
+};
+
+export default function CreateInquiry({navigation, data = [],
+  loading,
+  onLoadMore,search,hasMore}) {
+
+
+    console.log('new inquiry',data)
+
+
+    const SkeletonList = () => (
+      <>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </>
+    );
+    
+    
+      if (loading && data.length === 0) {
+      return (
+        <View style={styles.container}>
+          <SkeletonList />
+        </View>
+      );
+    }
+
+if (!loading && data.length === 0 && search) {
+  return (
+    <View style={styles.emptyState}>
+      <Feather name="search" size={42} color="#ccc" />
+      <Text style={styles.emptyTitle}>No results found</Text>
+      <Text style={styles.emptySubtitle}>
+        Try searching with a different project or client name
+      </Text>
+    </View>
+  );
+}
+// ✅ NO DATA AT ALL (no search)
+if (!loading && data.length === 0 && !search) {
+  return (
+    <View style={styles.emptyState}>
+      <Feather name="inbox" size={46} color="#ccc" />
+      <Text style={styles.emptyTitle}>
+        No inquiries yet
+      </Text>
+      <Text style={styles.emptySubtitle}>
+        New project inquiries will appear here
+      </Text>
+    </View>
+  );
+}
+
+
   return (
  <View style={styles.container}>
       {/* Header */}
    
 
-      {/* Top Tabs */}
-      
-
-      {/* Search + Create New */}
-     <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <Feather name="search" size={moderateScale(18)} color="#999" />
-          <TextInput
-            placeholder="Search..."
-            style={styles.searchInput}
-            placeholderTextColor="#999"
-          />
-        </View>
-
-        <TouchableOpacity style={styles.createBtn} onPress={ () => navigation.navigate('CreateInquiry')}>
-          <Text style={styles.createBtnText}>+ Create New</Text>
-        </TouchableOpacity>
-      </View>
+    
 
       {/* Inquiry List */}
-      <FlatList
-        data={[1, 2, 3]}
-        renderItem={() => <InquiryCard />}
-        keyExtractor={(item) => item.toString()}
-        contentContainerStyle={{ paddingBottom: 90 }}
-      />
+   <FlatList
+  data={data}                          // 👈 API data
+  keyExtractor={(item) => item._id}    // 👈 unique id
+  renderItem={({ item }) => (
+    <InquiryCard
+      item={item}
+      navigation={navigation}
+    />
+  )}
+  onEndReached={onLoadMore}            // 👈 pagination
+  onEndReachedThreshold={0.4}
+  ListFooterComponent={
+  loading && data.length > 0 ? (
+    <View style={styles.footerLoader}>
+      <AnimatedSpinner size={26} />
+      <Text style={styles.footerText}>Loading more...</Text>
+    </View>
+  ) : !hasMore ? (
+    <Text style={styles.noMoreText}>
+      No more results
+    </Text>
+  ) : null
+}
+  contentContainerStyle={{ paddingBottom: 90 }}
+/>
 
-      {/* Bottom buttons */}
-   <View style={styles.bottomActions}>
-  <View style={styles.actionWrapper}>
-    
-    {/* Sort By */}
-    <TouchableOpacity style={styles.actionBtn}>
-      <Feather name="sliders" size={18} color="#333" />
-      <Text style={styles.actionText}>Sort by</Text>
-    </TouchableOpacity>
 
-    {/* Divider */}
-    <View style={styles.divider} />
-
-    {/* Filter By */}
-    <TouchableOpacity style={styles.actionBtn}>
-      <Feather name="filter" size={18} color="#333" />
-      <Text style={styles.actionText}>Filter by</Text>
-    </TouchableOpacity>
-
-  </View>
-</View>
-
+     
     </View>
   );
 }
 
 
-function InquiryCard() {
+
+
+function InquiryCard({ item, navigation }) {
+
+   const dispatch = useDispatch();
+
+  const handleViewDetails = () => {
+    dispatch(setSelectedInquiry(item)); // 🔥 FULL OBJECT STORE
+    navigation.navigate("ProjectDashboard");
+  };
+
+const handleCreateOrDraft = () => {
+  // ✅ Redux me full inquiry store
+  dispatch(setSelectedInquiry(item));
+
+  if (item.draftId) {
+    // 🟠 Draft → direct details
+    navigation.navigate("ProjectDetails");
+  } else {
+    // 🟢 No draft → dashboard + auto open modal
+    dispatch(openCreateProposalModal()); // 🔥 ADD THIS
+    navigation.navigate("ProjectDashboard");
+  }
+};
+
+const getDraftButtonIcon = (item) => {
+  return item.draftId ? "file-text" : "file-plus";
+};
+
   return (
     <View style={styles.card}>
-      <Text style={styles.cardId}>NQ25016</Text>
+      {/* Project ID */}
+      <Text style={styles.cardId}>{item.projectId}</Text>
 
+      {/* Address / Project Name */}
       <Text style={styles.cardAddress}>
-        22 LORAINE STREET, BROOKLYN NY 11231
+        {item.projectName}
       </Text>
 
-    
-<View style={styles.peopleRow}>
-       <View style={styles.personBox}>
-            <IMAGE.FLEX width={40} height={30} />
-      
+   <View style={styles.dashedDivider} />
+      {/* INFO ROW */}
+      <View style={styles.peopleRow}>
+        {/* Elevators */}
+        <View style={styles.personBox}>
+          <IMAGE.FLEX width={40} height={30} />
           <View style={styles.personDetails}>
             <Text style={styles.personLabel}>No. of Elevators</Text>
-            <Text style={styles.mechanic}>3</Text>
+            <Text style={styles.mechanic}>
+              {item.noOfElevatorsNum}
+            </Text>
           </View>
         </View>
-      
-        {/* Site Manager */}
+
+        {/* Client */}
         <View style={styles.personBox}>
           <IMAGE.USER_CHECK width={32} height={32} />
-      
           <View style={styles.personDetails}>
             <Text style={styles.personLabel}>Client</Text>
-            <Text style={styles.site}>Sky Equity Group</Text>
+            <Text style={styles.site}>
+              {item.client?.clientName || "-"}
+            </Text>
           </View>
         </View>
+      </View>
 
-        </View>
-
+      {/* ACTION BUTTONS */}
       <View style={styles.btnRow}>
-        <TouchableOpacity style={styles.greyBtn}>
+        <TouchableOpacity
+          style={styles.greyBtn}
+         onPress={handleViewDetails}
+        >
           <Text style={styles.greyBtnText}>View Details</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.orangeBtn}>
-          <Text style={styles.orangeBtnText}>Create Proposal</Text>
-        </TouchableOpacity>
-      </View>
-<View style={styles.createtime}>
+<TouchableOpacity
+  style={styles.orangeBtn}
+  onPress={handleCreateOrDraft}
+  activeOpacity={0.8}
+>
+  <Feather
+    name={getDraftButtonIcon(item)}
+    size={16}
+    color="#FFF"
+    style={{ marginRight: 6 }}
+  />
 
-    <Text style={styles.dateText}>Created on: 20 Sep, 2025</Text>
-</View>
-    
+  <Text style={styles.orangeBtnText}>
+    {item.draftId ? "Open Draft" : "Create Proposal"}
+  </Text>
+</TouchableOpacity>
+
+
+
+      </View>
+
+      {/* CREATED DATE */}
+      <View style={styles.createtime}>
+        <Text style={styles.dateText}>
+          Created on:{" "}
+          {new Date(item.createdAt).toDateString()}
+        </Text>
+      </View>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -138,51 +276,19 @@ const styles = StyleSheet.create({
    
   },
 
-  /* Search Row */
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: verticalScale(10),
-     marginHorizontal: moderateScale(10),
+
+  dashedDivider: {
+    borderWidth: 0.6,
+    borderColor: "#E0E0E0",
+    marginTop: verticalScale(8),
   },
 
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    paddingVertical: verticalScale(5),
-    paddingHorizontal: moderateScale(12),
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
-  },
 
-  searchInput: {
-    flex: 1,
-    marginLeft: moderateScale(6),
-    fontSize: fontScale(13),
-    color: Colors.black,
-  },
-
-  createBtn: {
-    backgroundColor: Colors.primary,
-    marginLeft: moderateScale(10),
-    paddingHorizontal: moderateScale(15),
-    paddingVertical: verticalScale(14),
-    borderRadius: Radius.pill,
-  },
-
-  createBtnText: {
-    color: Colors.white,
-    fontSize: fontScale(13),
-    fontWeight: "700",
-  },
 
   /* CARD */
   card: {
     backgroundColor: Colors.white,
-    marginTop: verticalScale(10),
+    marginTop: verticalScale(5),
     padding: moderateScale(15),
     borderRadius: Radius.md,
      borderWidth:1,
@@ -237,6 +343,9 @@ const styles = StyleSheet.create({
 
   orangeBtn: {
     flex: 1,
+     flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
     marginLeft: moderateScale(10),
     backgroundColor: Colors.primary,
     borderRadius: Radius.pill,
@@ -259,48 +368,7 @@ createtime:{
     color: "#999",
     fontSize: fontScale(15),
   },
- bottomActions: {
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  alignItems: "center",
-  paddingVertical: 12,
-  backgroundColor: "#fff",
-  borderTopWidth: 1,
-  borderColor: "#eee",
-  paddingBottom: 25, // to look clean
-},
 
-actionWrapper: {
-  flexDirection: "row",
-  backgroundColor: "#fff",
-  paddingHorizontal: 20,
-  paddingVertical: 10,
- 
-
-  
-},
-
-actionBtn: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 5,
-  paddingHorizontal: 10,
-},
-
-divider: {
-  width: 1,
-  height: 20,
-  backgroundColor: "#ddd",
-  marginHorizontal: 12,
-},
-
-actionText: {
-  fontSize: 14,
-  fontWeight: "500",
-  color: "#333",
-},
 
 
 peopleRow: {
@@ -355,4 +423,97 @@ siteavatar: {
   textAlign: "center",
   textAlignVertical: "center",  // Android perfect vertical align
 },
+
+/////////////////////
+footerLoader: {
+  paddingVertical: 24,
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+footerText: {
+  marginTop: 8,
+  fontSize: fontScale(12),
+  color: "#999",
+},
+noMoreText: {
+  textAlign: "center",
+  paddingVertical: 20,
+  color: "#aaa",
+  fontSize: fontScale(12),
+},
+
+
+////////////////////
+skeletonLineSmall: {
+  height: 10,
+  width: "35%",
+  backgroundColor: "#ddd",
+  borderRadius: 4,
+  marginBottom: 10,
+},
+
+skeletonLineLarge: {
+  height: 18,
+  width: "75%",
+  backgroundColor: "#ddd",
+  borderRadius: 6,
+  marginBottom: 12,
+},
+
+skeletonLineMedium: {
+  height: 14,
+  width: "60%",
+  backgroundColor: "#ddd",
+  borderRadius: 6,
+  marginBottom: 10,
+},
+
+skeletonBtnRow: {
+  flexDirection: "row",
+  marginTop: 10,
+},
+
+skeletonBtn: {
+  flex: 1,
+  height: 36,
+  backgroundColor: "#ddd",
+  borderRadius: 20,
+},
+
+/* 🔥 SHIMMER OVERLAY */
+shimmerOverlay: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  height: "100%",
+  width: "40%",
+  backgroundColor: "rgba(255, 255, 255, 0.278)",
+},
+
+
+//////////////////////
+
+emptyState: {
+  flex: 1,
+  bottom:30,
+  alignItems: "center",
+  justifyContent: "center",
+  paddingHorizontal: 20,
+},
+
+emptyTitle: {
+  marginTop: 12,
+  fontSize: fontScale(16),
+  fontWeight: "600",
+  color: "#333",
+},
+
+emptySubtitle: {
+  marginTop: 6,
+  fontSize: fontScale(13),
+  color: "#888",
+  textAlign: "center",
+},
+
 });

@@ -16,14 +16,13 @@ import D, {
   Spacing,
   Radius,
 } from "../../constants/Dimmence";
-import { setSelectedInquiry } from "../../redux/Slices/selectedInquirySlice";
-import { useSelector ,useDispatch} from "react-redux";
+import { useDispatch } from "react-redux";
+import { setSelectedInquiry ,openCreateProposalModal} from "../../redux/Slices/selectedInquirySlice";
 import * as IMAGE from "../../assets/svg/index"
 import AnimatedSpinner from "../all/AnimatedSpinner";
 
 
 const SkeletonCard = () => {
-
   const shimmerAnim = useRef(new Animated.Value(-1)).current;
 
   useEffect(() => {
@@ -68,7 +67,7 @@ const SkeletonCard = () => {
   );
 };
 
-export default function PricedJobs({
+export default function SingedJobs({
   navigation,
   data = [],
   loading,        // 👈 initial loading
@@ -81,22 +80,24 @@ export default function PricedJobs({
 
 
 
-const SkeletonList = () => (
-  <>
-    {[1, 2, 3, 4, 5].map((i) => (
-      <SkeletonCard key={i} />
-    ))}
-  </>
-);
 
+    const SkeletonList = () => (
+      <>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </>
+    );
+    
+    
+      if (loading && data.length === 0) {
+      return (
+        <View style={styles.container}>
+          <SkeletonList />
+        </View>
+      );
+    }
 
-  if (loading && data.length === 0) {
-  return (
-    <View style={styles.container}>
-      <SkeletonList />
-    </View>
-  );
-}
 if (!loading && data.length === 0 && search) {
   return (
     <View style={styles.emptyState}>
@@ -109,7 +110,6 @@ if (!loading && data.length === 0 && search) {
   );
 }
 
- 
   return (
     <View style={styles.container}>
       {/* Search + Create New */}
@@ -139,7 +139,7 @@ if (!loading && data.length === 0 && search) {
   contentContainerStyle={{ paddingBottom: 140 }}
   onEndReached={onLoadMore}
   onEndReachedThreshold={0.6}
- ListFooterComponent={
+  ListFooterComponent={
   loading && data.length > 0 ? (
     <View style={styles.footerLoader}>
       <AnimatedSpinner size={26} />
@@ -153,26 +153,6 @@ if (!loading && data.length === 0 && search) {
 }
 />
 
-
-
-
-
-      {/* Bottom actions (same UI) */}
-      {/* <View style={styles.bottomActions}>
-        <View style={styles.actionWrapper}>
-          <TouchableOpacity style={styles.actionBtn}>
-            <Feather name="sliders" size={18} color="#333" />
-            <Text style={styles.actionText}>Sort by</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.actionBtn}>
-            <Feather name="filter" size={18} color="#333" />
-            <Text style={styles.actionText}>Filter by</Text>
-          </TouchableOpacity>
-        </View>
-      </View> */}
     </View>
   );
 }
@@ -181,12 +161,14 @@ if (!loading && data.length === 0 && search) {
 
 function InquiryCard({ item, navigation }) {
 
-   const dispatch = useDispatch();
-    const handleViewDetails = () => {
-       dispatch(setSelectedInquiry(item)); // 🔥 FULL OBJECT STORE
-       navigation.navigate("ProjectDashboard");
-     };
-   
+    const dispatch = useDispatch();
+     
+       const handleViewDetails = () => {
+         dispatch(setSelectedInquiry(item)); // 🔥 FULL OBJECT STORE
+         navigation.navigate("ProjectDashboard");
+       };
+     
+
   return (
     <View style={styles.card}>
       {/* Project ID */}
@@ -196,40 +178,40 @@ function InquiryCard({ item, navigation }) {
       <Text style={styles.cardAddress}>
         {item.projectName}
       </Text>
-
-      <View style={styles.dashedDivider} />
-              {/* INFO ROW */}
-              <View style={styles.peopleRow}>
-                {/* Elevators */}
-                <View style={styles.personBox}>
-                  <IMAGE.FLEX width={40} height={30} />
-                  <View style={styles.personDetails}>
-                    <Text style={styles.personLabel}>No. of Elevators</Text>
-                    <Text style={styles.mechanic}>
-                      {item.noOfElevatorsNum}
-                    </Text>
-                  </View>
-                </View>
-        
-                {/* Client */}
-                <View style={styles.personBox}>
-                  <IMAGE.USER_CHECK width={32} height={32} />
-                  <View style={styles.personDetails}>
-                    <Text style={styles.personLabel}>Client</Text>
-                    <Text style={styles.site}>
-                      {item.client?.clientName || "-"}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+   <View style={styles.dashedDivider} />
+      {/* Elevators */}
+        <View style={styles.peopleRow}>
+               {/* Elevators */}
+               <View style={styles.personBox}>
+                 <IMAGE.FLEX width={40} height={30} />
+                 <View style={styles.personDetails}>
+                   <Text style={styles.personLabel}>No. of Elevators</Text>
+                   <Text style={styles.mechanic}>
+                     {item.noOfElevatorsNum}
+                   </Text>
+                 </View>
+               </View>
+       
+               {/* Client */}
+               <View style={styles.personBox}>
+                 <IMAGE.USER_CHECK width={32} height={32} />
+                 <View style={styles.personDetails}>
+                   <Text style={styles.personLabel}>Client</Text>
+                   <Text style={styles.site}>
+                     {item.client?.clientName || "-"}
+                   </Text>
+                 </View>
+               </View>
+             </View>
 
       {/* Buttons */}
       <View style={styles.btnRow}>
         <TouchableOpacity
           style={styles.greyBtn}
-          onPress={handleViewDetails}
+          onPress={handleViewDetails
+          }
         >
-          <Text style={styles.greyBtnText}>Send Proposal</Text>
+          <Text style={styles.greyBtnText}>View Details</Text>
         </TouchableOpacity>
 
         {/* {!item.paymentTermsCreated && (
@@ -249,7 +231,7 @@ function InquiryCard({ item, navigation }) {
       </View>
 
       {/* Created date */}
-         <View style={styles.createtime}>
+       <View style={styles.createtime}>
                 <Text style={styles.dateText}>
                   Created on:{" "}
                   {new Date(item.createdAt).toDateString()}
@@ -268,45 +250,11 @@ const styles = StyleSheet.create({
    
   },
 
-  /* Search Row */
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: verticalScale(10),
-     marginHorizontal: moderateScale(10),
-  },
 
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    paddingVertical: verticalScale(5),
-    paddingHorizontal: moderateScale(12),
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
-  },
-
-  searchInput: {
-    flex: 1,
-    marginLeft: moderateScale(6),
-    fontSize: fontScale(13),
-    color: Colors.black,
-  },
-
-  createBtn: {
-    backgroundColor: Colors.primary,
-    marginLeft: moderateScale(10),
-    paddingHorizontal: moderateScale(15),
-    paddingVertical: verticalScale(14),
-    borderRadius: Radius.pill,
-  },
-
-  createBtnText: {
-    color: Colors.white,
-    fontSize: fontScale(13),
-    fontWeight: "700",
+  dashedDivider: {
+    borderWidth: 0.6,
+    borderColor: "#E0E0E0",
+    marginTop: verticalScale(8),
   },
 
   /* CARD */
@@ -353,34 +301,18 @@ const styles = StyleSheet.create({
 
   greyBtn: {
     flex: 1,
-   // borderWidth: 1,
-
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: Radius.pill,
     paddingVertical: verticalScale(8),
     alignItems: "center",
-    backgroundColor:Colors.primary,
   },
 
   greyBtnText: {
-    color: Colors.white,
-    fontSize: fontScale(16),
-    fontWeight:"600"
-  },
-
-  orangeBtn: {
-    flex: 1,
-    marginLeft: moderateScale(10),
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.pill,
-    paddingVertical: verticalScale(8),
-    alignItems: "center",
-  },
-
-  orangeBtnText: {
-    color: Colors.white,
+    color: Colors.black,
     fontSize: fontScale(13),
-    fontWeight: "700",
   },
+
 createtime:{
    alignItems:'center',
 
@@ -391,102 +323,60 @@ createtime:{
     color: "#999",
     fontSize: fontScale(15),
   },
- bottomActions: {
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  alignItems: "center",
-  paddingVertical: 12,
-  backgroundColor: "#fff",
-  borderTopWidth: 1,
-  borderColor: "#eee",
-  paddingBottom: 25, // to look clean
-},
 
-actionWrapper: {
+
+peopleRow: {
   flexDirection: "row",
-  backgroundColor: "#fff",
-  paddingHorizontal: 20,
-  paddingVertical: 10,
+  justifyContent: "space-between",
  
-
-  
+  marginTop: 12,
 },
 
-actionBtn: {
-  flexDirection: "row",
+personBox: {
+     justifyContent: "center",    
+  flexDirection: "row",      // 👈 Icon + right side text
   alignItems: "center",
-  gap: 5,
-  paddingHorizontal: 10,
+  width: "48%",
 },
 
-divider: {
-  width: 1,
-  height: 20,
-  backgroundColor: "#ddd",
-  marginHorizontal: 12,
+personDetails: {
+  marginLeft: 10,            // 👈 space between icon & text
+  justifyContent: "center",
 },
 
-actionText: {
-  fontSize: 14,
-  fontWeight: "500",
-  color: "#333",
+personLabel: {
+  fontSize: 12,
+  color: "#444",
+  marginBottom: 3,
 },
 
+mechanicavatar: {
+  width: 32,
+  height: 32,
+  borderRadius: 16,     // 32 / 2 = perfect circle
+  backgroundColor: "#ad12b6",
+  color: "#fff",
 
-  peopleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-   
-    marginTop: 12,
-  },
-  
-  personBox: {
-       justifyContent: "center",    
-    flexDirection: "row",      // 👈 Icon + right side text
-    alignItems: "center",
-    width: "48%",
-  },
-  
-  personDetails: {
-    marginLeft: 10,            // 👈 space between icon & text
-    justifyContent: "center",
-  },
-  
-  personLabel: {
-    fontSize: 12,
-    color: "#444",
-    marginBottom: 3,
-  },
-  
-  mechanicavatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,     // 32 / 2 = perfect circle
-    backgroundColor: "#ad12b6",
-    color: "#fff",
-  
-    fontSize: 13,
-    fontWeight: "700",
-  
-    textAlign: "center",
-    textAlignVertical: "center",  // Android perfect vertical align
-  },
-  
-  siteavatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,     // 32 / 2 = perfect circle
-    backgroundColor: "#19890d",
-    color: "#fff",
-  
-    fontSize: 13,
-    fontWeight: "700",
-  
-    textAlign: "center",
-    textAlignVertical: "center",  // Android perfect vertical align
-  },
+  fontSize: 13,
+  fontWeight: "700",
+
+  textAlign: "center",
+  textAlignVertical: "center",  // Android perfect vertical align
+},
+
+siteavatar: {
+  width: 32,
+  height: 32,
+  borderRadius: 16,     // 32 / 2 = perfect circle
+  backgroundColor: "#19890d",
+  color: "#fff",
+
+  fontSize: 13,
+  fontWeight: "700",
+
+  textAlign: "center",
+  textAlignVertical: "center",  // Android perfect vertical align
+},
 
 
 ////////////////////
@@ -536,7 +426,7 @@ shimmerOverlay: {
   backgroundColor: "rgba(255, 255, 255, 0.278)",
 },
 
-//////////////////////
+///////////////////////////
 footerLoader: {
   paddingVertical: 24,
   alignItems: "center",
@@ -556,14 +446,12 @@ noMoreText: {
   fontSize: fontScale(12),
 },
 
-///////////////////
-
+///////////////////////
 emptyState: {
   flex: 1,
   alignItems: "center",
   justifyContent: "center",
   paddingHorizontal: 20,
-  bottom:30,
 },
 
 emptyTitle: {
@@ -579,5 +467,6 @@ emptySubtitle: {
   color: "#888",
   textAlign: "center",
 },
+
 
 });

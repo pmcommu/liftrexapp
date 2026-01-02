@@ -25,3 +25,5 @@ export { default as FOLDER} from '../svg/folder.svg';
 export { default as ARROW} from '../svg/arrow-expand.svg';
 export { default as FILE} from '../svg/file.svg';
 export { default as MESSAGE} from '../svg/message.svg';
+
+export { default as SPINNER} from '../svg/spinner.svg';

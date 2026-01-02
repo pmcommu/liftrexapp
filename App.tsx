@@ -12,6 +12,9 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from "react-redux";
 import { store } from "./src/redux/story";
+import Toast from "react-native-toast-message";
+
+import { toastConfig } from "./src/config/toastConfig";
 export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
@@ -28,6 +31,7 @@ export default function App() {
         <RootNavigator />
       </SafeAreaProvider>
   
+  <Toast config={toastConfig} />
   </GestureHandlerRootView>
   </Provider>
   );

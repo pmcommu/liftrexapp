@@ -1032,46 +1032,33 @@ style={[
     <View>
       {/* Search */}
 {user?.roleName === "admin" && (
-  <TouchableOpacity
-    style={styles.siteassignBox}
-    onPress={() => openAssignSiteManager(activeTab)}
-    activeOpacity={0.8}
-  >
-    {/* CENTER TEXT */}
-    <View style={styles.centerTextWrap}>
-      <Text style={styles.assignText}>Site Manager</Text>
+<View
+  style={styles.siteManagerRow}
+  
+>
+  {/* LEFT TEXT */}
+  <Text style={styles.siteManagerText}>Site Manager</Text>
+
+  {/* RIGHT AVATAR + PLUS */}
+  <TouchableOpacity style={styles.rightWrap}
+  onPress={() => openAssignSiteManager(activeTab)}
+  activeOpacity={0.8}>
+    <View style={styles.avatarCircle}>
+      <Text style={styles.avatarText}>
+        {getInitials(sitemanager?.[0]?.name || "D")}
+      </Text>
     </View>
 
-    {/* RIGHT SIDE – SITE MANAGER AVATAR */}
-    {sitemanager?.length > 0 && (
-      <View style={styles.avatarStack}>
-        {sitemanager.slice(0, 1).map((m, index) => (
-          <View
-            key={m._id}
-            style={[
-              styles.avatarCircle,
-              {
-                backgroundColor: m.profileColor || "#10B981", // green for site manager
-              },
-            ]}
-          >
-            <Text style={styles.avatarText}>
-              {getInitials(m.name)}
-            </Text>
-          </View>
-        ))}
-
-        {/* FUTURE SAFE: if multiple site managers */}
-        {sitemanager.length > 1 && (
-          <View style={styles.countCircle}>
-            <Text style={styles.countText}>
-              +{sitemanager.length - 1}
-            </Text>
-          </View>
-        )}
-      </View>
-    )}
+    <View style={styles.plusCircle}>
+      <Feather name="plus" size={14} color="#FF6A00" />
+    </View>
   </TouchableOpacity>
+</View>
+
+
+
+
+
 )}
 
  <View style={styles.card}>
@@ -1451,21 +1438,64 @@ tabActiveText: {
 
 
 ////////////////////SITE MANAGERASSING STYLEE//////////////////////////
-siteassignBox: {
-  marginHorizontal: moderateScale(12),
-marginVertical: verticalScale(5),
+siteManagerRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
 
-  height: verticalScale(45),
-  paddingHorizontal: moderateScale(16),
+  paddingHorizontal: 16,
+  height: 44,
 
-  borderRadius: moderateScale(40),
+  backgroundColor: "#fff",
+},
+
+siteManagerText: {
+  fontSize: 15,
+  fontWeight: "600",
+  color: "#111",
+},
+
+rightWrap: {
+  flexDirection: "row",
+  alignItems: "center",
+
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+
+  borderRadius: 25,
   borderWidth: 1,
-  borderColor: "#fe7c63",
-  //backgroundColor: Colors.primaryLight,
+  borderColor: "#E5E7EB",
+},
 
-  position: "relative",          // 🔥 REQUIRED
+avatarCircle: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+
+  backgroundColor: "#6366F1", // purple
+  alignItems: "center",
   justifyContent: "center",
 },
+
+avatarText: {
+  color: "#fff",
+  fontSize: 13,
+  fontWeight: "700",
+},
+
+plusCircle: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+
+  borderWidth: 1,
+  borderColor: "#FF6A00",
+  marginLeft: 6,
+
+  alignItems: "center",
+  justifyContent: "center",
+},
+
 
 ////////////////////ASSING STYLEE//////////////////////////
 assignBox: {

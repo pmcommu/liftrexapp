@@ -43,6 +43,12 @@ export default {
   bgMedium: "#F2F2F2",
   bgDark: "#EEEEEE",
 
+
+    textPrimary: "#000000",
+  textSecondary: "#575757",
+ 
+
+
   overlay: "rgba(0,0,0,0.4)",
 
   // ⚪ BASICS
@@ -52,4 +58,10 @@ export default {
   // 🟦 TRANSPARENT COLORS
   transparent: "transparent",
   primaryTransparent: "rgba(253, 99, 57, 0.4)", // same as old transpentrt
+
+
+
+  ////////////
+  statusColor:"#5d34da",
+  statusColorlight:"#5e34da33"
 };
